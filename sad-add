@@ -1,0 +1,51 @@
+#!/bin/sh
+
+# Start with a folder or a "playlist".
+# A playlist is a newline-separated list of files/folders.
+# You can't have newlines in any files in a playlist.
+SAD_SOCK=${SAD_SOCK:-"$HOME"/.socket}
+SAD_PATH=${SAD_PATH:-"$HOME"/aud}
+SAD_PATH="$SAD_PATH"/$1
+SAD_DEFAULT_MODE=${SAD_DEFAULT_MODE:-"random"}
+
+
+# Portable echo. No arguments.
+echo () { printf %s\\n "$*" ; }
+
+nosock () {
+    echo "Socket not found at $SAD_SOCK"
+    echo "Did you start the SAD?\nsad -f $SAD_SOCK &"
+}
+nopath () {
+    echo "Playlist/folder not found at $SAD_PATH"
+    echo "You can set the working dir with SAD_PATH"
+}
+
+[ -e "$SAD_SOCK" ] || nosock
+[ -e "$SAD_PATH" ] || nopath
+
+echo 'h'
+
+if [ ! -S "$SAD_SOCK" ]; then
+	echo "$0: no unix domain socket at: ${SAD_SOCK}" >&2
+	exit 1
+fi
+
+echo $SAD_SOCK $SAD_PATH
+
+while read -r p; do
+    d=$(dirname "$p")
+    echo $d
+    test -d "$d" || printf 'add %s\n' "$d" | nc -U "$SAD_SOCK"
+    find "$d" -type f \
+        \( -iname "*.mp3" -or \
+        -iname "*.ogg" -or \
+        -iname "*.flac" -or \
+        -iname "*.wav" \) \
+        -exec printf 'add %s\n' {} \; | \
+        nc -NU "$SAD_SOCK"
+done <<-!__EOF__
+$SAD_PATH
+!__EOF__
+
+echo

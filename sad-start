@@ -1,0 +1,3 @@
+#!/bin/sh
+${SAD_SOCK:-"$HOME"/.socket}
+sad -f "$SAD_SOCK"
