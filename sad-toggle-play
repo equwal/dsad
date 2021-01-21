@@ -1,0 +1,15 @@
+#!/bin/sh
+# Overload the play button to also pause but never stop/replay
+
+SAD_SOCK=${SAD_SOCK:-"$HOME"/.socket}
+# Long repetitive lines of code are really good style, they said.
+cmd () {
+    echo "$1" | nc -NU "$SAD_SOCK"
+}
+playback () {
+    echo 'status playback' | nc -NU $SAD_SOCK | grep -Fq "playback: $1"
+}
+playback 'play' && cmd 'pause' && exit 0
+playback 'pause' && cmd 'pause' && exit 0
+playback 'stop' && cmd 'play' && exit 0
+exit 1
