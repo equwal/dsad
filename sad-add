@@ -1,51 +1,81 @@
 #!/bin/sh
-
-# Start with a folder or a "playlist".
-# A playlist is a newline-separated list of files/folders.
-# You can't have newlines in any files in a playlist.
 SAD_SOCK=${SAD_SOCK:-"$HOME"/.socket}
-SAD_PATH=${SAD_PATH:-"$HOME"/aud}
-SAD_PATH="$SAD_PATH"/$1
 SAD_DEFAULT_MODE=${SAD_DEFAULT_MODE:-"random"}
-
 
 # Portable echo. No arguments.
 echo () { printf %s\\n "$*" ; }
+
+usage () {
+    echo "usage: $0 [-p playlist] [subpaths...]"
+    echo "$0 mus/song.mp3"
+    echo "$0 mus/eminem"
+    echo "$0 -p mus/programming.list # can include folders or files."
+}
+
+[ -z "$*" ] && usage && exit 1
 
 nosock () {
     echo "Socket not found at $SAD_SOCK"
     echo "Did you start the SAD?\nsad -f $SAD_SOCK &"
 }
 nopath () {
-    echo "Playlist/folder not found at $SAD_PATH"
-    echo "You can set the working dir with SAD_PATH"
+    echo "Playlist/folder not found."
+    echo "You can set the working dir with."
 }
 
-[ -e "$SAD_SOCK" ] || nosock
-[ -e "$SAD_PATH" ] || nopath
+file () {
+    echo file
+    printf 'add %s\n' "$1" | nc -NU "$SAD_SOCK"
+}
 
-echo 'h'
-
-if [ ! -S "$SAD_SOCK" ]; then
-	echo "$0: no unix domain socket at: ${SAD_SOCK}" >&2
-	exit 1
-fi
-
-echo $SAD_SOCK $SAD_PATH
-
-while read -r p; do
-    d=$(dirname "$p")
-    echo $d
-    test -d "$d" || printf 'add %s\n' "$d" | nc -U "$SAD_SOCK"
-    find "$d" -type f \
+dir () {
+    find "$1" -type f \
         \( -iname "*.mp3" -or \
         -iname "*.ogg" -or \
         -iname "*.flac" -or \
         -iname "*.wav" \) \
         -exec printf 'add %s\n' {} \; | \
         nc -NU "$SAD_SOCK"
-done <<-!__EOF__
-$SAD_PATH
-!__EOF__
+}
 
-echo
+dispatch () {
+    if [ ! -e "$1" ]; then
+        echo "Path $1 not found"
+    else
+        if [ -f "$1" ]; then
+            file "$1"
+        else
+            dir "$1"
+        fi
+    fi
+}
+
+
+playlist () {
+    # dirname clobbers multiple trailing newlines
+    d=$(dirname "$1" ; echo x) ; d=${d%??}
+    while read -r p; do
+        dispatch "$d/$p"
+    done <<EOF
+$(cat "$1")
+EOF
+}
+
+[ -e "$SAD_SOCK" ] || nosock
+
+if [ ! -S "$SAD_SOCK" ]; then
+	echo "$0: no unix domain socket at: ${SAD_SOCK}" >&2
+	exit 1
+fi
+
+echo "$SAD_DEFAULT_MODE" | nc -NU "$SAD_SOCK"
+
+
+while true; do
+        case $1 in
+            -h|--help)     usage; exit 0;;
+            -p|--playlist) playlist "$2"; shift 2; break;;
+            --)                           shift; break;;
+            *)             dispatch "$1"; shift; break;;
+        esac
+done
