@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/bash
+# BUG: need to use absolute paths
+#
 SAD_SOCK=${SAD_SOCK:-"$HOME"/.socket}
 SAD_DEFAULT_MODE=${SAD_DEFAULT_MODE:-"random"}
 
@@ -24,7 +26,6 @@ nopath () {
 }
 
 file () {
-    echo file
     printf 'add %s\n' "$1" | nc -NU "$SAD_SOCK"
 }
 
