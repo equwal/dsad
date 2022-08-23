@@ -1,5 +1,7 @@
 #!/bin/sh
 # dmenu script for sad
+# requires BSD-style netcat with -N (it is in gentoo and arch packagers, at least)
+#
 PROMPT="sad? "
 ZEROCMDS="random
 repeat
@@ -17,35 +19,27 @@ version
 enable output
 disable output"
 
-ARGCMDS="volume [0|1]
+ARGCMDS="volume 0-100
 pause [0|1]
 play [ID]
 remove [ID]"
 
-
-nosock () {
-    printf "Socket not found at %s\\n" "$SAD_SOCK"
-    printf "Did you start the SAD?\\nsad -f %s &\\n" "$SAD_SOCK"
-}
-
 sadcmd () {
-    [ -e "$SAD_SOCK" ] || nosock
-    printf "%s %s\\n" "$1" "$2" | nc -NU "$SAD_SOCK"
-}
-
-sadcmd_dmenuarg () {
-    arg="$(printf "%s" "$ARGCMDS" | grep "$1" | cut -d ' ' -f 2)"
-    response="$(echo "" | dmenu -i -p "arg $arg? ")"
-    sadcmd "$1" "$response"
+  [ -e "$SAD_SOCK" ] \
+      || printf "Socket not found at %s\\n" "$SAD_SOCK" \
+      && exit 1
+  printf "%s %s\\n" "$1" "$2" | nc -NU "$SAD_SOCK"
 }
 
 # Echo, fixed so only the first argument can be flags.
 cmd=$(printf "%s\\n%s" "$ZEROCMDS" "$ARGCMDS" \
-        | dmenu -i -l "$(printf "%s\\n%s" "$ZEROCMDS" "$ARGCMDS" | wc -l -)" -p "$PROMPT" \
-        | cut -f1 -d ' ')
+      | dmenu -i -l "$(printf "%s\\n%s" "$ZEROCMDS" "$ARGCMDS" | wc -l -)" -p "$PROMPT" \
+      | cut -f1 -d ' ')
 
 if [ -n "$(printf "%s" "$ARGCMDS" | grep "$cmd")" ]; then # ARGCMDS
-    sadcmd_dmenuarg "$cmd"
+  sadcmd \
+    "$cmd" \
+    "$(printf "" | dmenu -i -l 0 -p "arg $(printf "%s" "$ARGCMDS" | grep "$cmd" | cut -d ' ' -f 2)? ")"
 else # ZEROCMDS
-    sadcmd "$cmd"
+  sadcmd "$cmd"
 fi
