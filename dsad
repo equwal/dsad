@@ -1,0 +1,55 @@
+#!/bin/sh
+# dmenu script for sad
+PROMPT="sad? "
+ZEROCMDS="random
+repeat
+volume 0-100
+next
+pause
+play
+prev
+stop
+add path
+clear
+remove [ID]
+playlist
+close
+kill
+ping
+uptime
+version
+enable output
+disable output"
+
+ARGCMDS="volume [0|1]
+pause [0|1]
+play [ID]
+remove [ID]"
+
+
+nosock () {
+    printf "Socket not found at %s\\n" "$SAD_SOCK"
+    printf "Did you start the SAD?\\nsad -f %s &\\n" "$SAD_SOCK"
+}
+
+sadcmd () {
+    [ -e "$SAD_SOCK" ] || nosock
+    printf "%s %s\\n" "$1" "$2" | nc -NU "$SAD_SOCK"
+}
+
+sadcmd_dmenuarg () {
+    arg="$(printf "%s" "$ARGCMDS" | grep "$1" | cut -d ' ' -f 2)"
+    response="$(echo "" | dmenu -i -p "arg $arg? ")"
+    sadcmd "$1" "$response"
+}
+
+# Echo, fixed so only the first argument can be flags.
+cmd=$(printf "%s\\n%s" "$ZEROCMDS" "$ARGCMDS" \
+        | dmenu -i -l "$(printf "%s\\n%s" "$ZEROCMDS" "$ARGCMDS" | wc -l -)" -p "$PROMPT" \
+        | cut -f1 -d ' ')
+
+if [ -n "$(printf "%s" "$ARGCMDS" | grep "$cmd")" ]; then # ARGCMDS
+    sadcmd_dmenuarg "$cmd"
+else # ZEROCMDS
+    sadcmd "$cmd"
+fi
