@@ -3,15 +3,11 @@
 PROMPT="sad? "
 ZEROCMDS="random
 repeat
-volume 0-100
 next
-pause
-play
 prev
 stop
 add path
 clear
-remove [ID]
 playlist
 close
 kill
