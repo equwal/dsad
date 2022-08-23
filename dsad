@@ -8,21 +8,21 @@ repeat
 next
 prev
 stop
-add path
 clear
 playlist
 close
 kill
 ping
 uptime
-version
-enable output
-disable output"
+version"
 
 ARGCMDS="volume 0-100
 pause [0|1]
 play [ID]
-remove [ID]"
+remove [ID]
+add path
+enable output
+disable output"
 
 sadcmd () {
   [ -e "$SAD_SOCK" ] \
