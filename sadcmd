@@ -1,2 +1,10 @@
 #!/bin/sh
-printf -- %s\\n "$1" | nc -NU "$SAD_SOCK"
+# see PROTOCOL for details
+
+nosock () {
+    echo "Socket not found at $SAD_SOCK"
+    echo "Did you start the SAD?\nsad -f $SAD_SOCK &"
+}
+
+[ -e "$SAD_SOCK" ] || nosock
+printf "%s %s\\n" "$1" "$2" | nc -NU "$SAD_SOCK"

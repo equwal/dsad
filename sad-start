@@ -1,3 +1,8 @@
 #!/bin/sh
-${SAD_SOCK:-"$HOME"/.socket}
+SAD_SOCK=${SAD_SOCK:-"$HOME"/.socket}
+[ -e "$SAD_SOCK" ] \
+    && echo "socket already exists at $SAD_SOCK" \
+    && echo "sad is probably running" \
+    && echo "exiting" \
+    && exit 1
 sad -f "$SAD_SOCK" &
