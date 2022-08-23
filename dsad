@@ -3,24 +3,30 @@
 # requires BSD-style netcat with -N (it is in gentoo and arch packagers, at least)
 #
 PROMPT="sad? "
-ZEROCMDS="random
-repeat
-next
+
+# hint: order the following however you want.
+
+CUSTOMCMDS="sad-toggle-play
+sad-add
+sad-start"
+ZEROCMDS="next
 prev
 stop
+kill
+random
+repeat
 clear
 playlist
 close
-kill
 ping
 uptime
 version"
 
-ARGCMDS="volume 0-100
+ARGCMDS="add path
+volume 0-100
 pause [0|1]
 play [ID]
 remove [ID]
-add path
 enable output
 disable output"
 
@@ -32,14 +38,17 @@ sadcmd () {
 }
 
 # Echo, fixed so only the first argument can be flags.
-cmd=$(printf "%s\\n%s" "$ZEROCMDS" "$ARGCMDS" \
-      | dmenu -i -l "$(printf "%s\\n%s" "$ZEROCMDS" "$ARGCMDS" | wc -l -)" -p "$PROMPT" \
+cmd=$(printf "%s\\n%s\\n%s" "$CUSTOMCMDS" "$ZEROCMDS" "$ARGCMDS" \
+      | dmenu -i -l "$(printf "%s\\n%s\\n%s" "$CUSTOMCMDS" "$ZEROCMDS" "$ARGCMDS" | wc -l -)" -p "$PROMPT" \
       | cut -f1 -d ' ')
 
-if [ -n "$(printf "%s" "$ARGCMDS" | grep "$cmd")" ]; then # ARGCMDS
-  sadcmd \
-    "$cmd" \
-    "$(printf "" | dmenu -i -l 0 -p "arg $(printf "%s" "$ARGCMDS" | grep "$cmd" | cut -d ' ' -f 2)? ")"
-else # ZEROCMDS
-  sadcmd "$cmd"
-fi
+[ -n "$(printf "%s" "$CUSTOMCMDS" | grep "$cmd")" ]  && eval "$cmd"  && exit 0
+[ -n "$(printf "%s" "$ZEROCMDS"   | grep "$cmd")" ] && sadcmd "$cmd" && exit 0
+[ -n "$(printf "%s" "$ARGCMDS"    | grep "$cmd")" ] \
+    && sadcmd \
+         "$cmd" \
+         "$(printf "" | dmenu -i -l 0 -p "arg $(printf "%s" "$ARGCMDS" | grep "$cmd" | cut -d ' ' -f 2)? ")" \
+    && exit 0
+
+# not an arg
+exit 1
