@@ -1,0 +1,9 @@
+#!/bin/sh
+
+MUSIC="$HOME"/aud/mus
+
+chdir "$MUSIC"
+
+the_music="$(find . | dmenu -l 15 -p 'pick music: ')"
+
+sad-add "$(pwd)"/"$the_music"

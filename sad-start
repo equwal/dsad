@@ -2,7 +2,7 @@
 SAD_SOCK=${SAD_SOCK:-"$HOME"/.socket}
 [ -e "$SAD_SOCK" ] \
     && echo "socket already exists at $SAD_SOCK" \
-    && echo "sad is probably running" \
-    && echo "exiting" \
-    && exit 1
+    && echo "sad is maybe already running" \
+    && echo "Deleting it and attempting to start" \
+    && rm "$SAD_SOCK"
 sad -f "$SAD_SOCK" &

@@ -1,14 +1,15 @@
 #!/bin/sh
 # dmenu script for sad
-# requires BSD-style netcat with -N (it is in gentoo and arch packagers, at least)
-#
+# - requires BSD-style netcat with -N (it is in gentoo and arch packagers, at least)
+# - requires sadcmd
 PROMPT="sad? "
 
 # hint: order the following however you want.
 
-CUSTOMCMDS="sad-toggle-play
-sad-add
-sad-start"
+CUSTOMCMDS="sadmenu
+sad-start
+sad-toggle-play"
+
 ZEROCMDS="next
 prev
 stop
@@ -22,7 +23,9 @@ ping
 uptime
 version"
 
-ARGCMDS="add path
+ARGCMDS="sad-add file/dir
+sad-add-playlist playlist.ply
+add path
 volume 0-100
 pause [0|1]
 play [ID]
@@ -30,24 +33,18 @@ remove [ID]
 enable output
 disable output"
 
-sadcmd () {
-  [ -e "$SAD_SOCK" ] \
-      || printf "Socket not found at %s\\n" "$SAD_SOCK" \
-      && exit 1
-  printf "%s %s\\n" "$1" "$2" | nc -NU "$SAD_SOCK"
-}
-
 # Echo, fixed so only the first argument can be flags.
-cmd=$(printf "%s\\n%s\\n%s" "$CUSTOMCMDS" "$ZEROCMDS" "$ARGCMDS" \
-      | dmenu -i -l "$(printf "%s\\n%s\\n%s" "$CUSTOMCMDS" "$ZEROCMDS" "$ARGCMDS" | wc -l -)" -p "$PROMPT" \
+cmd=$(printf "%s\\n%s\\n%s"  "$CUSTOMCMDS" "$ZEROCMDS" "$ARGCMDS" \
+      | dmenu -i -l "$(printf "%s\\n%s\\n%s"  "$CUSTOMCMDS" "$ZEROCMDS" "$ARGCMDS" | wc -l -)" -p "$PROMPT" \
       | cut -f1 -d ' ')
 
-[ -n "$(printf "%s" "$CUSTOMCMDS" | grep "$cmd")" ]  && eval "$cmd"  && exit 0
-[ -n "$(printf "%s" "$ZEROCMDS"   | grep "$cmd")" ] && sadcmd "$cmd" && exit 0
+[ -n "$(printf "%s" "$CUSTOMCMDS" | grep "$cmd")" ] \
+    && eval "$cmd"  && exit 0
+[ -n "$(printf "%s" "$ZEROCMDS"   | grep "$cmd")" ] \
+    && sadcmd "$cmd" && exit 0
 [ -n "$(printf "%s" "$ARGCMDS"    | grep "$cmd")" ] \
-    && sadcmd \
-         "$cmd" \
-         "$(printf "" | dmenu -i -l 0 -p "arg $(printf "%s" "$ARGCMDS" | grep "$cmd" | cut -d ' ' -f 2)? ")" \
+    && sadcmd "$cmd"  \
+              "$(printf "" | dmenu -i -l 0 -p "arg $(printf "%s" "$ARGCMDS" | grep "$cmd" | cut -d ' ' -f 2)? ")" \
     && exit 0
 
 # not an arg
