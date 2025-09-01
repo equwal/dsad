@@ -41,9 +41,9 @@ cmd=$(printf "%s\\n%s\\n%s"  "$CUSTOMCMDS" "$ZEROCMDS" "$ARGCMDS" \
 [ -n "$(printf "%s" "$CUSTOMCMDS" | grep "$cmd")" ] \
     && eval "$cmd"  && exit 0
 [ -n "$(printf "%s" "$ZEROCMDS"   | grep "$cmd")" ] \
-    && sadcmd "$cmd" && exit 0
+    && sad-cmd "$cmd" && exit 0
 [ -n "$(printf "%s" "$ARGCMDS"    | grep "$cmd")" ] \
-    && sadcmd "$cmd"  \
+    && sad-cmd "$cmd"  \
               "$(printf "" | dmenu -i -l 0 -p "arg $(printf "%s" "$ARGCMDS" | grep "$cmd" | cut -d ' ' -f 2)? ")" \
     && exit 0
 
